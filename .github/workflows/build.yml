@@ -42,9 +42,6 @@ jobs:
           "$VCPKG_ROOT/vcpkg" --disable-metrics install --x-manifest-root=$GITHUB_WORKSPACE --x-install-root=$VCPKG_ROOT/installed
           echo "VCPKG_INSTALLED_ROOT=$VCPKG_ROOT/installed" >> $GITHUB_ENV
 
-      - name: Verify ffmpeg headers installed
-        run: ls -la $VCPKG_ROOT/installed/x64-linux/include/libavcodec/avcodec.h
-
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
 
@@ -56,6 +53,15 @@ jobs:
       - name: Install flutter_rust_bridge_codegen
         run: cargo install flutter_rust_bridge_codegen --version 1.80.1 --features uuid --locked
 
+      - name: Generate bridge code (MUST run before cargo build)
+        run: |
+          cd flutter
+          flutter pub get
+          $HOME/.cargo/bin/flutter_rust_bridge_codegen \
+            --rust-input ../src/flutter_ffi.rs \
+            --dart-output ./lib/generated_bridge.dart \
+            --c-output ./macos/Runner/bridge_generated.h
+
       - name: Build Rust library (Flutter)
         env:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
@@ -64,11 +70,6 @@ jobs:
       - name: Build Flutter Linux
         run: |
           cd flutter
-          flutter pub get
-          $HOME/.cargo/bin/flutter_rust_bridge_codegen \
-            --rust-input ../src/flutter_ffi.rs \
-            --dart-output ./lib/generated_bridge.dart \
-            --c-output ./macos/Runner/bridge_generated.h
           flutter build linux --release
 
       - name: Package
@@ -104,9 +105,6 @@ jobs:
           & "$env:VCPKG_ROOT\vcpkg.exe" --disable-metrics install --x-manifest-root="$env:GITHUB_WORKSPACE" --x-install-root="$env:VCPKG_ROOT\installed"
           echo "VCPKG_INSTALLED_ROOT=$env:VCPKG_ROOT\installed" >> $env:GITHUB_ENV
 
-      - name: List vcpkg installed directories
-        run: dir "$env:VCPKG_ROOT\installed"
-
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
 
@@ -118,6 +116,12 @@ jobs:
       - name: Install flutter_rust_bridge_codegen
         run: cargo install flutter_rust_bridge_codegen --version 1.80.1 --features uuid --locked
 
+      - name: Generate bridge code (MUST run before cargo build)
+        run: |
+          cd flutter
+          flutter pub get
+          $HOME/.cargo/bin/flutter_rust_bridge_codegen --rust-input ../src/flutter_ffi.rs --dart-output ./lib/generated_bridge.dart --c-output ./macos/Runner/bridge_generated.h
+
       - name: Build Rust library (Flutter)
         env:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}\vcpkg\installed
@@ -126,8 +130,6 @@ jobs:
       - name: Build Flutter Windows
         run: |
           cd flutter
-          flutter pub get
-          $HOME/.cargo/bin/flutter_rust_bridge_codegen --rust-input ../src/flutter_ffi.rs --dart-output ./lib/generated_bridge.dart --c-output ./macos/Runner/bridge_generated.h
           flutter build windows --release
 
       - name: Upload artifact
@@ -182,21 +184,29 @@ jobs:
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
+      - name: Install flutter_rust_bridge_codegen
+        run: cargo install flutter_rust_bridge_codegen --version 1.80.1 --features uuid --locked
+
+      - name: Generate bridge code (MUST run before cargo build)
+        run: |
+          cd flutter
+          flutter pub get
+          $HOME/.cargo/bin/flutter_rust_bridge_codegen \
+            --rust-input ../src/flutter_ffi.rs \
+            --dart-output ./lib/generated_bridge.dart \
+            --c-output ./macos/Runner/bridge_generated.h
+
       - name: Build vcpkg deps for Android (arm64)
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
-        run: |
-          cd flutter
-          bash ./build_android_deps.sh arm64-v8a
+        run: bash flutter/build_android_deps.sh arm64-v8a
 
       - name: Build vcpkg deps for Android (arm32)
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
-        run: |
-          cd flutter
-          bash ./build_android_deps.sh armeabi-v7a
+        run: bash flutter/build_android_deps.sh armeabi-v7a
 
       - name: Build Rust library for Android (arm64)
         env:
@@ -213,7 +223,6 @@ jobs:
       - name: Build APK
         run: |
           cd flutter
-          flutter pub get
           flutter build apk \
             --target-platform android-arm64,android-arm \
             --release \
@@ -250,9 +259,6 @@ jobs:
           "$VCPKG_ROOT/vcpkg" --disable-metrics install --x-manifest-root=$GITHUB_WORKSPACE --x-install-root=$VCPKG_ROOT/installed
           echo "VCPKG_INSTALLED_ROOT=$VCPKG_ROOT/installed" >> $GITHUB_ENV
 
-      - name: Verify ffmpeg headers installed
-        run: ls -la $VCPKG_ROOT/installed/arm64-osx/include/libavcodec/avcodec.h
-
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
 
@@ -268,6 +274,15 @@ jobs:
       - name: Install flutter_rust_bridge_codegen
         run: cargo install flutter_rust_bridge_codegen --version 1.80.1 --features uuid --locked
 
+      - name: Generate bridge code (MUST run before cargo build)
+        run: |
+          cd flutter
+          flutter pub get
+          $HOME/.cargo/bin/flutter_rust_bridge_codegen \
+            --rust-input ../src/flutter_ffi.rs \
+            --dart-output ./lib/generated_bridge.dart \
+            --c-output ./macos/Runner/bridge_generated.h
+
       - name: Build Rust library (Flutter)
         env:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
@@ -276,11 +291,6 @@ jobs:
       - name: Build Flutter macOS
         run: |
           cd flutter
-          flutter pub get
-          $HOME/.cargo/bin/flutter_rust_bridge_codegen \
-            --rust-input ../src/flutter_ffi.rs \
-            --dart-output ./lib/generated_bridge.dart \
-            --c-output ./macos/Runner/bridge_generated.h
           flutter build macos --release
 
       - name: Upload artifact
