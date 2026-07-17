@@ -8,7 +8,6 @@ on:
 env:
   FLUTTER_VERSION: '3.24.5'
   RUST_VERSION: '1.75'
-  VCPKGGIT_COMMIT: '2024.07.12'
 
 jobs:
   # ─────────────────────────────────────────────
@@ -33,13 +32,11 @@ jobs:
             libgstreamer-plugins-base1.0-dev libpam0g-dev pkg-config \
             libunwind-dev
 
-      - name: Install vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg "$HOME/vcpkg"
-          cd "$HOME/vcpkg"
-          git checkout ${{ env.VCPKGGIT_COMMIT }}
-          ./bootstrap-vcpkg.sh -disableMetrics
-          ./vcpkg --disable-metrics install libvpx libyuv opus aom
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '120deac3062162151622ca4860575a33844ba10b'
+          vcpkgJsonGlob: 'vcpkg.json'
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -56,10 +53,8 @@ jobs:
 
       - name: Build Rust library (Flutter)
         env:
-          VCPKG_ROOT: ${{ github.workspace }}/../vcpkg
-        run: |
-          export VCPKG_ROOT="$HOME/vcpkg"
-          cargo build --locked --features flutter,hwcodec --release
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cargo build --locked --features flutter,hwcodec --release
 
       - name: Build Flutter Linux
         run: |
@@ -87,20 +82,17 @@ jobs:
   # ─────────────────────────────────────────────
   build-windows:
     runs-on: windows-2022
-    env:
-      VCPKG_ROOT: C:\vcpkg
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Update pre-installed vcpkg
-        run: |
-          cd C:\vcpkg
-          git pull
-          .\bootstrap-vcpkg.bat -disableMetrics
-          .\vcpkg --disable-metrics install libvpx:x64-windows-static libyuv:x64-windows-static opus:x64-windows-static aom:x64-windows-static
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '120deac3062162151622ca4860575a33844ba10b'
+          vcpkgJsonGlob: 'vcpkg.json'
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -116,6 +108,8 @@ jobs:
         run: cargo install flutter_rust_bridge_codegen --version 1.80.1 --features uuid --locked
 
       - name: Build Rust library (Flutter)
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}\vcpkg
         run: cargo build --locked --features flutter,hwcodec --release
 
       - name: Build Flutter Windows
@@ -155,12 +149,11 @@ jobs:
           wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
           unzip -q android-ndk-r25c-linux.zip
 
-      - name: Install vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg
-          cd vcpkg
-          git checkout ${{ env.VCPKGGIT_COMMIT }}
-          ./bootstrap-vcpkg.sh -disableMetrics
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '120deac3062162151622ca4860575a33844ba10b'
+          vcpkgJsonGlob: 'vcpkg.json'
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -215,7 +208,7 @@ jobs:
           path: flutter/build/app/outputs/flutter-apk/*.apk
 
   # ─────────────────────────────────────────────
-  # macOS (arm64 + x64 universal)
+  # macOS (arm64)
   # ─────────────────────────────────────────────
   build-macos:
     runs-on: macos-14
@@ -228,13 +221,11 @@ jobs:
       - name: Install system dependencies
         run: brew install nasm yasm
 
-      - name: Install vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg "$HOME/vcpkg"
-          cd "$HOME/vcpkg"
-          git checkout ${{ env.VCPKGGIT_COMMIT }}
-          ./bootstrap-vcpkg.sh -disableMetrics
-          ./vcpkg --disable-metrics install libvpx libyuv opus aom
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '120deac3062162151622ca4860575a33844ba10b'
+          vcpkgJsonGlob: 'vcpkg.json'
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -254,9 +245,9 @@ jobs:
         run: cargo install flutter_rust_bridge_codegen --version 1.80.1 --features uuid --locked
 
       - name: Build Rust library (Flutter)
-        run: |
-          export VCPKG_ROOT="$HOME/vcpkg"
-          cargo build --locked --features flutter,hwcodec --release
+        env:
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+        run: cargo build --locked --features flutter,hwcodec --release
 
       - name: Build Flutter macOS
         run: |
