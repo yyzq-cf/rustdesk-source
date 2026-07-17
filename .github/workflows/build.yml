@@ -212,21 +212,21 @@ jobs:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
         run: bash flutter/build_android_deps.sh armeabi-v7a
 
-      - name: Build Rust library for Android (arm64)
+      - name: Build Rust library for Android (arm64, no hwcodec)
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: bash flutter/ndk_arm64.sh
+        run: cargo ndk --platform 21 --target aarch64-linux-android build --locked --release --features flutter
 
-      - name: Build Rust library for Android (arm32)
+      - name: Build Rust library for Android (arm32, no hwcodec)
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-        run: bash flutter/ndk_arm.sh
+        run: cargo ndk --platform 21 --target armv7-linux-androideabi build --locked --release --features flutter
 
       - name: Build APK
         run: |
