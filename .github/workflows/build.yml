@@ -8,7 +8,7 @@ on:
 env:
   FLUTTER_VERSION: '3.24.5'
   RUST_VERSION: '1.75'
-  VCPKGGIT_COMMIT: '2023.04.15'
+  VCPKGGIT_COMMIT: '2024.07.12'
 
 jobs:
   # ─────────────────────────────────────────────
@@ -30,7 +30,8 @@ jobs:
             libxcb-randr0-dev libxdo-dev libxfixes-dev libxcb-shape0-dev \
             libxcb-xfixes0-dev libasound2-dev libpulse-dev cmake make \
             libclang-dev ninja-build libgstreamer1.0-dev \
-            libgstreamer-plugins-base1.0-dev libpam0g-dev pkg-config
+            libgstreamer-plugins-base1.0-dev libpam0g-dev pkg-config \
+            libunwind-dev
 
       - name: Install vcpkg
         run: |
@@ -57,7 +58,6 @@ jobs:
         env:
           VCPKG_ROOT: ${{ github.workspace }}/../vcpkg
         run: |
-          cd "${HOME}/vcpkg/.." && echo "VCPKG_ROOT=$(pwd)/vcpkg"
           export VCPKG_ROOT="$HOME/vcpkg"
           cargo build --locked --features flutter,hwcodec --release
 
@@ -87,17 +87,18 @@ jobs:
   # ─────────────────────────────────────────────
   build-windows:
     runs-on: windows-2022
+    env:
+      VCPKG_ROOT: C:\vcpkg
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Install vcpkg
+      - name: Update pre-installed vcpkg
         run: |
-          git clone https://github.com/microsoft/vcpkg C:\vcpkg
           cd C:\vcpkg
-          git checkout ${{ env.VCPKGGIT_COMMIT }}
+          git pull
           .\bootstrap-vcpkg.bat -disableMetrics
           .\vcpkg --disable-metrics install libvpx:x64-windows-static libyuv:x64-windows-static opus:x64-windows-static aom:x64-windows-static
 
@@ -115,8 +116,6 @@ jobs:
         run: cargo install flutter_rust_bridge_codegen --version 1.80.1 --features uuid --locked
 
       - name: Build Rust library (Flutter)
-        env:
-          VCPKG_ROOT: C:\vcpkg
         run: cargo build --locked --features flutter,hwcodec --release
 
       - name: Build Flutter Windows
@@ -172,8 +171,8 @@ jobs:
         run: |
           rustup target add aarch64-linux-android armv7-linux-androideabi
 
-      - name: Install cargo-ndk
-        run: cargo install cargo-ndk --locked
+      - name: Install cargo-ndk (compatible with rustc 1.75)
+        run: cargo install cargo-ndk --version 3.5.4 --locked
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -226,6 +225,9 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install system dependencies
+        run: brew install nasm yasm
+
       - name: Install vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg "$HOME/vcpkg"
@@ -252,8 +254,6 @@ jobs:
         run: cargo install flutter_rust_bridge_codegen --version 1.80.1 --features uuid --locked
 
       - name: Build Rust library (Flutter)
-        env:
-          VCPKG_ROOT: ${{ github.workspace }}/../vcpkg
         run: |
           export VCPKG_ROOT="$HOME/vcpkg"
           cargo build --locked --features flutter,hwcodec --release
