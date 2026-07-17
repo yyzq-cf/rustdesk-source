@@ -104,8 +104,8 @@ jobs:
           & "$env:VCPKG_ROOT\vcpkg.exe" --disable-metrics install --x-manifest-root="$env:GITHUB_WORKSPACE" --x-install-root="$env:VCPKG_ROOT\installed"
           echo "VCPKG_INSTALLED_ROOT=$env:VCPKG_ROOT\installed" >> $env:GITHUB_ENV
 
-      - name: Verify ffmpeg headers installed
-        run: dir "$env:VCPKG_ROOT\installed\x64-windows-static\include\libavcodec\avcodec.h"
+      - name: List vcpkg installed directories
+        run: dir "$env:VCPKG_ROOT\installed"
 
       - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
@@ -202,17 +202,13 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
-        run: |
-          cd flutter
-          bash ./ndk_arm64.sh
+        run: bash flutter/ndk_arm64.sh
 
       - name: Build Rust library for Android (arm32)
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
-        run: |
-          cd flutter
-          bash ./ndk_arm.sh
+        run: bash flutter/ndk_arm.sh
 
       - name: Build APK
         run: |
