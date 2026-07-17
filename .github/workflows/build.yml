@@ -237,11 +237,11 @@ jobs:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
           PKG_CONFIG_PATH: ${{ github.workspace }}/vcpkg/installed/arm64-android/lib/pkgconfig
+          PKG_CONFIG_LIBDIR: ${{ github.workspace }}/vcpkg/installed/arm64-android/lib/pkgconfig
+          PKG_CONFIG_SYSROOT_DIR: /
           PKG_CONFIG_ALLOW_CROSS: "1"
           OPUS_LIB_DIR: ${{ github.workspace }}/vcpkg/installed/arm64-android/lib
           OPUS_INCLUDE_DIR: ${{ github.workspace }}/vcpkg/installed/arm64-android/include
-          LIBRARY_PATH: ${{ github.workspace }}/vcpkg/installed/arm64-android/lib
-          RUSTFLAGS: "-L ${{ github.workspace }}/vcpkg/installed/arm64-android/lib"
         run: cargo ndk --platform 21 --target aarch64-linux-android build --locked --release --features flutter
 
       - name: Build Rust library for Android (arm32, no hwcodec)
@@ -251,9 +251,9 @@ jobs:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
           PKG_CONFIG_PATH: ${{ github.workspace }}/vcpkg/installed/arm-neon-android/lib/pkgconfig
+          PKG_CONFIG_LIBDIR: ${{ github.workspace }}/vcpkg/installed/arm-neon-android/lib/pkgconfig
+          PKG_CONFIG_SYSROOT_DIR: /
           PKG_CONFIG_ALLOW_CROSS: "1"
-          LIBRARY_PATH: ${{ github.workspace }}/vcpkg/installed/arm-neon-android/lib
-          RUSTFLAGS: "-L ${{ github.workspace }}/vcpkg/installed/arm-neon-android/lib"
         run: cargo ndk --platform 21 --target armv7-linux-androideabi build --locked --release --features flutter
 
       - name: Build APK
