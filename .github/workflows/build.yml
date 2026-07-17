@@ -127,7 +127,7 @@ jobs:
       - name: Build Rust library (Flutter)
         env:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}\vcpkg\installed
-        run: cargo build --locked --features flutter,hwcodec --release
+        run: cargo build --locked --features flutter --release
 
       - name: Build Flutter Windows
         run: |
