@@ -212,12 +212,23 @@ jobs:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
         run: bash flutter/build_android_deps.sh armeabi-v7a
 
-      - name: Patch scrap build.rs to add include path for Android
+      - name: Patch scrap build.rs and symlink headers for Android
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
         run: |
-          # scrap/build.rs link_vcpkg returns .../arm64-android/ without /include
-          # bindgen gets -I.../arm64-android/ but headers are in .../arm64-android/include/
-          # Fix: patch generate_bindings to also add /include subdirectory
+          # 1. Patch scrap/build.rs to add /include subdir for bindgen
           sed -i 's|b = b.clang_arg(format!("-I{}", dir.display()));|b = b.clang_arg(format!("-I{}", dir.display())); b = b.clang_arg(format!("-I{}/include", dir.display()));|' libs/scrap/build.rs
+
+          # 2. Symlink vcpkg headers into NDK sysroot so ALL crates (including magnum-opus) can find them
+          SYSROOT_INCLUDE="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/include"
+          for arch_dir in $VCPKG_ROOT/installed/arm64-android $VCPKG_ROOT/installed/arm-neon-android; do
+            if [ -d "$arch_dir/include" ]; then
+              for d in "$arch_dir/include"/*/; do
+                pkg=$(basename "$d")
+                ln -sf "$d" "$SYSROOT_INCLUDE/$pkg" 2>/dev/null || true
+              done
+            fi
+          done
 
       - name: Build Rust library for Android (arm64, no hwcodec)
         env:
