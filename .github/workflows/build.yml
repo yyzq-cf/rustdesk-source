@@ -7,7 +7,6 @@ on:
 
 env:
   FLUTTER_VERSION: '3.24.5'
-  RUST_VERSION: '1.75'
 
 jobs:
   # ─────────────────────────────────────────────
@@ -15,6 +14,8 @@ jobs:
   # ─────────────────────────────────────────────
   build-linux:
     runs-on: ubuntu-22.04
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,16 +33,16 @@ jobs:
             libgstreamer-plugins-base1.0-dev libpam0g-dev pkg-config \
             libunwind-dev
 
-      - name: Setup vcpkg
+      - name: Setup vcpkg (with project manifest)
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgGitCommitId: '120deac3062162151622ca4860575a33844ba10b'
           vcpkgJsonGlob: 'vcpkg.json'
+        env:
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
 
-      - name: Install Rust
+      - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -54,6 +55,7 @@ jobs:
       - name: Build Rust library (Flutter)
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
         run: cargo build --locked --features flutter,hwcodec --release
 
       - name: Build Flutter Linux
@@ -82,22 +84,24 @@ jobs:
   # ─────────────────────────────────────────────
   build-windows:
     runs-on: windows-2022
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}\vcpkg
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Setup vcpkg
+      - name: Setup vcpkg (with project manifest)
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgGitCommitId: '120deac3062162151622ca4860575a33844ba10b'
           vcpkgJsonGlob: 'vcpkg.json'
+        env:
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}\vcpkg\installed
 
-      - name: Install Rust
+      - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -110,6 +114,7 @@ jobs:
       - name: Build Rust library (Flutter)
         env:
           VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}\vcpkg\installed
         run: cargo build --locked --features flutter,hwcodec --release
 
       - name: Build Flutter Windows
@@ -131,7 +136,6 @@ jobs:
   build-android:
     runs-on: ubuntu-22.04
     env:
-      ANDROID_NDK_HOME: ${{ github.workspace }}/android-ndk-r25c
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
     steps:
       - name: Checkout
@@ -144,28 +148,29 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y zip g++ gcc git curl wget nasm yasm clang cmake make ninja-build pkg-config libclang-dev
 
-      - name: Install Android NDK
-        run: |
-          wget -q https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
-          unzip -q android-ndk-r25c-linux.zip
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup_ndk
+        with:
+          ndk-version: r25c
 
-      - name: Setup vcpkg
+      - name: Setup vcpkg (with project manifest)
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgGitCommitId: '120deac3062162151622ca4860575a33844ba10b'
           vcpkgJsonGlob: 'vcpkg.json'
+        env:
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
 
-      - name: Install Rust
+      - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
 
       - name: Add Rust targets
         run: |
           rustup target add aarch64-linux-android armv7-linux-androideabi
 
-      - name: Install cargo-ndk (compatible with rustc 1.75)
-        run: cargo install cargo-ndk --version 3.5.4 --locked
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk --locked
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -173,21 +178,35 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
 
       - name: Build vcpkg deps for Android (arm64)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
         run: |
           cd flutter
           bash ./build_android_deps.sh arm64-v8a
 
       - name: Build vcpkg deps for Android (arm32)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
         run: |
           cd flutter
           bash ./build_android_deps.sh armeabi-v7a
 
       - name: Build Rust library for Android (arm64)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
         run: |
           cd flutter
           bash ./ndk_arm64.sh
 
       - name: Build Rust library for Android (arm32)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
         run: |
           cd flutter
           bash ./ndk_arm.sh
@@ -212,6 +231,8 @@ jobs:
   # ─────────────────────────────────────────────
   build-macos:
     runs-on: macos-14
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -221,16 +242,16 @@ jobs:
       - name: Install system dependencies
         run: brew install nasm yasm
 
-      - name: Setup vcpkg
+      - name: Setup vcpkg (with project manifest)
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgGitCommitId: '120deac3062162151622ca4860575a33844ba10b'
           vcpkgJsonGlob: 'vcpkg.json'
+        env:
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
 
-      - name: Install Rust
+      - name: Install Rust (stable)
         uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
 
       - name: Add Rust targets
         run: |
@@ -247,6 +268,7 @@ jobs:
       - name: Build Rust library (Flutter)
         env:
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
         run: cargo build --locked --features flutter,hwcodec --release
 
       - name: Build Flutter macOS
