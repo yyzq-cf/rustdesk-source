@@ -212,6 +212,13 @@ jobs:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
         run: bash flutter/build_android_deps.sh armeabi-v7a
 
+      - name: Patch scrap build.rs to add include path for Android
+        run: |
+          # scrap/build.rs link_vcpkg returns .../arm64-android/ without /include
+          # bindgen gets -I.../arm64-android/ but headers are in .../arm64-android/include/
+          # Fix: patch generate_bindings to also add /include subdirectory
+          sed -i 's|b = b.clang_arg(format!("-I{}", dir.display()));|b = b.clang_arg(format!("-I{}", dir.display())); b = b.clang_arg(format!("-I{}/include", dir.display()));|' libs/scrap/build.rs
+
       - name: Build Rust library for Android (arm64, no hwcodec)
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
