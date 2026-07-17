@@ -90,6 +90,7 @@ jobs:
     runs-on: windows-2022
     env:
       VCPKG_ROOT: ${{ github.workspace }}\vcpkg
+      VCPKG_DEFAULT_TRIPLET: x64-windows-static
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -201,24 +202,30 @@ jobs:
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
         run: bash flutter/build_android_deps.sh arm64-v8a
 
       - name: Build vcpkg deps for Android (arm32)
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
         run: bash flutter/build_android_deps.sh armeabi-v7a
 
       - name: Build Rust library for Android (arm64)
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: bash flutter/ndk_arm64.sh
 
       - name: Build Rust library for Android (arm32)
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
+          VCPKG_ROOT: ${{ github.workspace }}/vcpkg
         run: bash flutter/ndk_arm.sh
 
       - name: Build APK
