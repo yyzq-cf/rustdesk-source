@@ -218,6 +218,8 @@ jobs:
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          C_INCLUDE_PATH: ${{ github.workspace }}/vcpkg/installed/arm64-android/include
+          CPLUS_INCLUDE_PATH: ${{ github.workspace }}/vcpkg/installed/arm64-android/include
         run: cargo ndk --platform 21 --target aarch64-linux-android build --locked --release --features flutter
 
       - name: Build Rust library for Android (arm32, no hwcodec)
@@ -226,6 +228,8 @@ jobs:
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+          C_INCLUDE_PATH: ${{ github.workspace }}/vcpkg/installed/arm-neon-android/include
+          CPLUS_INCLUDE_PATH: ${{ github.workspace }}/vcpkg/installed/arm-neon-android/include
         run: cargo ndk --platform 21 --target armv7-linux-androideabi build --locked --release --features flutter
 
       - name: Build APK
