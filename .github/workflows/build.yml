@@ -117,6 +117,7 @@ jobs:
         run: cargo install flutter_rust_bridge_codegen --version 1.80.1 --features uuid --locked
 
       - name: Generate bridge code (MUST run before cargo build)
+        shell: bash
         run: |
           cd flutter
           flutter pub get
