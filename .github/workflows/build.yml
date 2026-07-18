@@ -281,14 +281,17 @@ jobs:
       - name: Fix Kotlin/Gradle/AGP version compatibility
         run: |
           # Keep Gradle 7.6.4 (compatible with AGP 7.4.x)
-          # Upgrade AGP 7.3.1 -> 7.4.2 (last version not requiring namespace for all modules)
           sed -i 's/com.android.application" version "7.3.1"/com.android.application" version "7.4.2"/' flutter/android/settings.gradle
-          # Downgrade Kotlin 2.1.21 -> 1.8.20 (metadata 1.8.0, compatible with most deps)
+          # Upgrade Kotlin 2.1.21 -> 2.0.21
           sed -i 's/org.jetbrains.kotlin.android" version "2.1.21"/org.jetbrains.kotlin.android" version "2.0.21"/' flutter/android/settings.gradle
           # Remove jcenter (deprecated)
           sed -i '/jcenter()/d' flutter/android/build.gradle
           # Increase JVM memory for Gradle
           sed -i 's/-Xmx1024M/-Xmx4G/' flutter/android/gradle.properties
+          # Force Kotlin version in ALL subprojects (fixes plugin Kotlin metadata mismatch)
+          sed -i '/subprojects {/a\    project.configurations.all { resolutionStrategy.eachDependency { details -> if (details.requested.group == "org.jetbrains.kotlin") { details.useVersion "2.0.21" } } }' flutter/android/build.gradle
+          # Remove release signingConfig (use debug signing)
+          sed -i '/signingConfig signingConfigs.release/d' flutter/android/app/build.gradle
 
       - name: Build APK
         run: |
