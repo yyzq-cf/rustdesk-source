@@ -233,13 +233,8 @@ jobs:
       - name: Create .cargo/config.toml for Android lib search paths
         run: |
           mkdir -p .cargo
-          cat > .cargo/config.toml << 'CARGOEOF'
-          [target.aarch64-linux-android]
-          rustflags = ["-L", "/home/runner/work/rustdesk-source/rustdesk-source/vcpkg/installed/arm64-android/lib"]
-          
-          [target.armv7-linux-androideabi]
-          rustflags = ["-L", "/home/runner/work/rustdesk-source/rustdesk-source/vcpkg/installed/arm-neon-android/lib"]
-          CARGOEOF
+          printf '[target.aarch64-linux-android]\nrustflags = ["-L", "%s/vcpkg/installed/arm64-android/lib"]\n\n[target.armv7-linux-androideabi]\nrustflags = ["-L", "%s/vcpkg/installed/arm-neon-android/lib"]\n' "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" > .cargo/config.toml
+          cat .cargo/config.toml
 
       - name: Build Rust library for Android (arm64, no hwcodec)
         env:
