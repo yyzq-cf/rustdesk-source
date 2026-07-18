@@ -278,10 +278,20 @@ jobs:
           OPENSSL_VENDORED: "1"
         run: cargo ndk --platform 21 --target armv7-linux-androideabi build --locked --release --features flutter
 
-      - name: Fix Kotlin version compatibility
+      - name: Fix Kotlin/Gradle/AGP version compatibility
         run: |
-          # Fix Kotlin version mismatch: settings.gradle has 2.1.21 but kotlin-stdlib 1.9.10 is pulled in
+          # Upgrade Gradle 7.6.4 -> 8.3
+          sed -i 's|gradle-7.6.4-all.zip|gradle-8.3-all.zip|' flutter/android/gradle/wrapper/gradle-wrapper.properties
+          # Upgrade AGP 7.3.1 -> 8.1.0 (requires Gradle 8.0+)
+          sed -i 's/com.android.application" version "7.3.1"/com.android.application" version "8.1.0"/' flutter/android/settings.gradle
+          # Downgrade Kotlin 2.1.21 -> 1.9.10 (matches kotlin-stdlib 1.9.10)
           sed -i 's/org.jetbrains.kotlin.android" version "2.1.21"/org.jetbrains.kotlin.android" version "1.9.10"/' flutter/android/settings.gradle
+          # Fix namespace required by AGP 8.x
+          if ! grep -q "namespace" flutter/android/app/build.gradle; then
+            sed -i '/plugins {/a\\    namespace "com.carriez.flutter_hbb"' flutter/android/app/build.gradle 2>/dev/null || true
+          fi
+          # Remove jcenter (deprecated in Gradle 8)
+          sed -i '/jcenter()/d' flutter/android/build.gradle
 
       - name: Build APK
         run: |
