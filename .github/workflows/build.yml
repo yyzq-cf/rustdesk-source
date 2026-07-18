@@ -286,12 +286,13 @@ jobs:
           sed -i 's/com.android.application" version "7.3.1"/com.android.application" version "8.1.0"/' flutter/android/settings.gradle
           # Downgrade Kotlin 2.1.21 -> 1.9.10 (matches kotlin-stdlib 1.9.10)
           sed -i 's/org.jetbrains.kotlin.android" version "2.1.21"/org.jetbrains.kotlin.android" version "1.9.10"/' flutter/android/settings.gradle
-          # Add namespace inside android {} block (required by AGP 8.x)
-          if ! grep -q "namespace" flutter/android/app/build.gradle; then
-            sed -i 's/android {/android {\n    namespace "com.carriez.flutter_hbb"/' flutter/android/app/build.gradle
-          fi
+          # Add namespace to android block (required by AGP 8.x)
+          # Use awk instead of sed \n which doesn't work on all systems
+          awk '/^android \{/{print;print "    namespace \"com.carriez.flutter_hbb\"";next}1' flutter/android/app/build.gradle > /tmp/build.gradle.tmp && mv /tmp/build.gradle.tmp flutter/android/app/build.gradle
           # Remove jcenter (deprecated in Gradle 8)
           sed -i '/jcenter()/d' flutter/android/build.gradle
+          # Increase JVM memory for Gradle
+          sed -i 's/-Xmx1024M/-Xmx4G/' flutter/android/gradle.properties
 
       - name: Build APK
         run: |
