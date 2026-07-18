@@ -230,16 +230,17 @@ jobs:
             fi
           done
 
-      - name: Create .cargo/config.toml and verify lib files
+      - name: Create .cargo/config.toml and find lib files
         run: |
           mkdir -p .cargo
           printf '[target.aarch64-linux-android]\nrustflags = ["-L", "%s/vcpkg/installed/arm64-android/lib"]\n\n[target.armv7-linux-androideabi]\nrustflags = ["-L", "%s/vcpkg/installed/arm-neon-android/lib"]\n' "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" > .cargo/config.toml
           cat .cargo/config.toml
-          echo "=== Checking installed arm64-android lib ==="
-          ls -la $VCPKG_ROOT/installed/arm64-android/lib/ || echo "DIR NOT FOUND"
-          echo "=== Checking packages arm64-android lib ==="
-          ls -la $VCPKG_ROOT/packages/opus_arm64-android/lib/ 2>/dev/null || echo "NOT IN PACKAGES EITHER"
-          ls -la $VCPKG_ROOT/packages/libvpx_arm64-android/lib/ 2>/dev/null || echo "NOT IN PACKAGES EITHER"
+          echo "=== Finding all .a files ==="
+          find "$VCPKG_ROOT" -name "libopus.a" -o -name "libvpx.a" 2>/dev/null | head -20
+          echo "=== installed dir structure ==="
+          ls -la "$VCPKG_ROOT/installed/" 2>/dev/null || echo "installed/ NOT FOUND"
+          echo "=== Find arm64 dirs ==="
+          find "$VCPKG_ROOT" -type d -name "arm64-android" 2>/dev/null | head -10
 
       - name: Build Rust library for Android (arm64, no hwcodec)
         env:
