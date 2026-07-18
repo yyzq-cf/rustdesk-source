@@ -230,14 +230,23 @@ jobs:
             fi
           done
 
+      - name: Create .cargo/config.toml for Android lib search paths
+        run: |
+          mkdir -p .cargo
+          cat > .cargo/config.toml << 'CARGOEOF'
+          [target.aarch64-linux-android]
+          rustflags = ["-L", "/home/runner/work/rustdesk-source/rustdesk-source/vcpkg/installed/arm64-android/lib"]
+          
+          [target.armv7-linux-androideabi]
+          rustflags = ["-L", "/home/runner/work/rustdesk-source/rustdesk-source/vcpkg/installed/arm-neon-android/lib"]
+          CARGOEOF
+
       - name: Build Rust library for Android (arm64, no hwcodec)
         env:
           ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
           ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
           VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-          OPUS_LIB_DIR: ${{ github.workspace }}/vcpkg/installed/arm64-android/lib
-          OPUS_INCLUDE_DIR: ${{ github.workspace }}/vcpkg/installed/arm64-android/include
           OPENSSL_STATIC: "1"
           OPENSSL_VENDORED: "1"
         run: cargo ndk --platform 21 --target aarch64-linux-android build --locked --release --features flutter
