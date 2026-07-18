@@ -288,12 +288,15 @@ jobs:
           sed -i 's/org.jetbrains.kotlin.android" version "2.1.21"/org.jetbrains.kotlin.android" version "1.9.10"/' flutter/android/settings.gradle
           # Add namespace to android block (required by AGP 8.x)
           sed -i '84a\    namespace "com.carriez.flutter_hbb"' flutter/android/app/build.gradle
+          # Remove package attribute from AndroidManifest.xml (AGP 8.x uses namespace instead)
+          sed -i 's/ package="com.carriez.flutter_hbb"//' flutter/android/app/src/main/AndroidManifest.xml
           # Remove jcenter (deprecated in Gradle 8)
           sed -i '/jcenter()/d' flutter/android/build.gradle
           # Increase JVM memory for Gradle
           sed -i 's/-Xmx1024M/-Xmx4G/' flutter/android/gradle.properties
-          # Verify namespace was added
+          # Verify
           grep -n "namespace" flutter/android/app/build.gradle
+          grep "package=" flutter/android/app/src/main/AndroidManifest.xml || echo "package attr removed"
 
       - name: Build APK
         run: |
