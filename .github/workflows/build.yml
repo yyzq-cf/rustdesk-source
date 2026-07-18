@@ -337,7 +337,7 @@ jobs:
 
       - name: Add Rust targets
         run: |
-          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          rustup target add aarch64-apple-darwin
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
@@ -369,14 +369,79 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: rustdesk-macos
+          name: rustdesk-macos-arm64
+          path: flutter/build/macos/Build/Products/Release/
+
+  # ─────────────────────────────────────────────
+  # macOS (x86_64)
+  # ─────────────────────────────────────────────
+  build-macos-x86:
+    runs-on: macos-13
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install system dependencies
+        run: brew install nasm yasm
+
+      - name: Install vcpkg and build deps
+        run: |
+          git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
+          cd "$VCPKG_ROOT"
+          git checkout 120deac3062162151622ca4860575a33844ba10b
+          ./bootstrap-vcpkg.sh -disableMetrics
+          "$VCPKG_ROOT/vcpkg" --disable-metrics install --x-manifest-root=$GITHUB_WORKSPACE --x-install-root=$VCPKG_ROOT/installed
+          echo "VCPKG_INSTALLED_ROOT=$VCPKG_ROOT/installed" >> $GITHUB_ENV
+
+      - name: Install Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Rust targets
+        run: |
+          rustup target add x86_64-apple-darwin
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Install flutter_rust_bridge_codegen
+        run: cargo install flutter_rust_bridge_codegen --version 1.80.1 --features uuid --locked
+
+      - name: Generate bridge code (MUST run before cargo build)
+        run: |
+          cd flutter
+          flutter pub get
+          $HOME/.cargo/bin/flutter_rust_bridge_codegen \
+            --rust-input ../src/flutter_ffi.rs \
+            --dart-output ./lib/generated_bridge.dart \
+            --c-output ./macos/Runner/bridge_generated.h
+
+      - name: Build Rust library (Flutter)
+        env:
+          VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
+        run: cargo build --locked --features flutter,hwcodec --release
+
+      - name: Build Flutter macOS
+        run: |
+          cd flutter
+          flutter build macos --release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rustdesk-macos-x86_64
           path: flutter/build/macos/Build/Products/Release/
 
   # ─────────────────────────────────────────────
   # Release: collect all artifacts
   # ─────────────────────────────────────────────
   release:
-    needs: [build-linux, build-windows, build-android, build-macos]
+    needs: [build-linux, build-windows, build-android, build-macos, build-macos-x86]
     runs-on: ubuntu-22.04
     if: startsWith(github.ref, 'refs/tags/')
     steps:
@@ -396,4 +461,5 @@ jobs:
             artifacts/rustdesk-linux-x64/*
             artifacts/rustdesk-windows-x64/*
             artifacts/rustdesk-android/*
-            artifacts/rustdesk-macos/*
+            artifacts/rustdesk-macos-arm64/*
+            artifacts/rustdesk-macos-x86_64/*
