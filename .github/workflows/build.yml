@@ -230,17 +230,23 @@ jobs:
             fi
           done
 
-      - name: Create .cargo/config.toml and find lib files
+      - name: Create .cargo/config.toml and verify lib files
         run: |
           mkdir -p .cargo
           printf '[target.aarch64-linux-android]\nrustflags = ["-L", "%s/vcpkg/installed/arm64-android/lib"]\n\n[target.armv7-linux-androideabi]\nrustflags = ["-L", "%s/vcpkg/installed/arm-neon-android/lib"]\n' "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" > .cargo/config.toml
           cat .cargo/config.toml
-          echo "=== Finding all .a files ==="
-          find "$VCPKG_ROOT" -name "libopus.a" -o -name "libvpx.a" 2>/dev/null | head -20
-          echo "=== installed dir structure ==="
-          ls -la "$VCPKG_ROOT/installed/" 2>/dev/null || echo "installed/ NOT FOUND"
-          echo "=== Find arm64 dirs ==="
-          find "$VCPKG_ROOT" -type d -name "arm64-android" 2>/dev/null | head -10
+
+      - name: Manually install opus and vpx for arm64-android (workaround for vcpkg manifest mode)
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup_ndk.outputs.ndk-path }}
+          ANDROID_NDK_ROOT: ${{ steps.setup_ndk.outputs.ndk-path }}
+        run: |
+          # build_android_deps.sh may not install arm64-android to installed/ due to vcpkg manifest mode
+          # Manually install opus and libvpx for arm64-android
+          "$VCPKG_ROOT/vcpkg" install opus libvpx libyuv aom --triplet arm64-android --x-install-root="$VCPKG_ROOT/installed"
+          # Verify
+          ls -la "$VCPKG_ROOT/installed/arm64-android/lib/libopus.a" || echo "STILL MISSING opus"
+          ls -la "$VCPKG_ROOT/installed/arm64-android/lib/libvpx.a" || echo "STILL MISSING vpx"
 
       - name: Build Rust library for Android (arm64, no hwcodec)
         env:
