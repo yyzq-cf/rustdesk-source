@@ -230,11 +230,16 @@ jobs:
             fi
           done
 
-      - name: Create .cargo/config.toml for Android lib search paths
+      - name: Create .cargo/config.toml and verify lib files
         run: |
           mkdir -p .cargo
           printf '[target.aarch64-linux-android]\nrustflags = ["-L", "%s/vcpkg/installed/arm64-android/lib"]\n\n[target.armv7-linux-androideabi]\nrustflags = ["-L", "%s/vcpkg/installed/arm-neon-android/lib"]\n' "$GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" > .cargo/config.toml
           cat .cargo/config.toml
+          echo "=== Checking installed arm64-android lib ==="
+          ls -la $VCPKG_ROOT/installed/arm64-android/lib/ || echo "DIR NOT FOUND"
+          echo "=== Checking packages arm64-android lib ==="
+          ls -la $VCPKG_ROOT/packages/opus_arm64-android/lib/ 2>/dev/null || echo "NOT IN PACKAGES EITHER"
+          ls -la $VCPKG_ROOT/packages/libvpx_arm64-android/lib/ 2>/dev/null || echo "NOT IN PACKAGES EITHER"
 
       - name: Build Rust library for Android (arm64, no hwcodec)
         env:
