@@ -376,7 +376,7 @@ jobs:
   # macOS (x86_64)
   # ─────────────────────────────────────────────
   build-macos-x86:
-    runs-on: macos-13
+    runs-on: macos-15
     env:
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
     steps:
