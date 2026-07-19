@@ -249,7 +249,6 @@ jobs:
         run: |
           # vcpkg manifest mode doesn't allow specifying packages and arm32 overwrites arm64.
           # Run from /tmp to avoid manifest mode detection.
-          cd /tmp
           "$VCPKG_ROOT/vcpkg" install opus libvpx libyuv aom oboe cpu-features \
             --triplet arm64-android \
             --x-install-root="$VCPKG_ROOT/installed" \
@@ -377,7 +376,7 @@ jobs:
   # macOS (x86_64)
   # ─────────────────────────────────────────────
   build-macos-x86:
-    runs-on: macos-15
+    runs-on: macos-13
     env:
       VCPKG_ROOT: ${{ github.workspace }}/vcpkg
     steps:
@@ -389,16 +388,12 @@ jobs:
       - name: Install system dependencies
         run: brew install nasm yasm
 
-      - name: Install vcpkg and build deps (x64-osx)
         run: |
           git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
           cd "$VCPKG_ROOT"
           git checkout 120deac3062162151622ca4860575a33844ba10b
           ./bootstrap-vcpkg.sh -disableMetrics
           "$VCPKG_ROOT/vcpkg" --disable-metrics install --x-manifest-root=$GITHUB_WORKSPACE --x-install-root=$VCPKG_ROOT/installed
-          # Install x64-osx triplet from /tmp to avoid manifest mode conflict
-          cd /tmp
-          "$VCPKG_ROOT/vcpkg" --disable-metrics install opus libvpx libyuv aom --triplet x64-osx --x-install-root=$VCPKG_ROOT/installed
           echo "VCPKG_INSTALLED_ROOT=$VCPKG_ROOT/installed" >> $GITHUB_ENV
 
       - name: Install Rust (stable)
@@ -425,15 +420,15 @@ jobs:
             --dart-output ./lib/generated_bridge.dart \
             --c-output ./macos/Runner/bridge_generated.h
 
-      - name: Build Rust library (Flutter, x86_64, no hwcodec)
+      - name: Build Rust library (Flutter, no hwcodec)
         env:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
-        run: cargo build --locked --features flutter --release --target x86_64-apple-darwin
+        run: cargo build --locked --features flutter --release
 
-      - name: Build Flutter macOS (x86_64)
+      - name: Build Flutter macOS
         run: |
           cd flutter
-          flutter build macos --release --target-platform darwin-x64
+          flutter build macos --release
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
