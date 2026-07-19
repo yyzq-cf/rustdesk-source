@@ -422,10 +422,10 @@ jobs:
             --dart-output ./lib/generated_bridge.dart \
             --c-output ./macos/Runner/bridge_generated.h
 
-      - name: Build Rust library (Flutter, x86_64)
+      - name: Build Rust library (Flutter, x86_64, no hwcodec)
         env:
           VCPKG_INSTALLED_ROOT: ${{ github.workspace }}/vcpkg/installed
-        run: cargo build --locked --features flutter,hwcodec --release --target x86_64-apple-darwin
+        run: cargo build --locked --features flutter --release --target x86_64-apple-darwin
 
       - name: Build Flutter macOS (x86_64)
         run: |
