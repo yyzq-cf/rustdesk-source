@@ -396,8 +396,9 @@ jobs:
           git checkout 120deac3062162151622ca4860575a33844ba10b
           ./bootstrap-vcpkg.sh -disableMetrics
           "$VCPKG_ROOT/vcpkg" --disable-metrics install --x-manifest-root=$GITHUB_WORKSPACE --x-install-root=$VCPKG_ROOT/installed
-          # Also install x64-osx triplet (for cross-compile to x86_64)
-          "$VCPKG_ROOT/vcpkg" --disable-metrics install opus libvpx libyuv aom --triplet x64-osx
+          # Install x64-osx triplet from /tmp to avoid manifest mode conflict
+          cd /tmp
+          "$VCPKG_ROOT/vcpkg" --disable-metrics install opus libvpx libyuv aom --triplet x64-osx --x-install-root=$VCPKG_ROOT/installed
           echo "VCPKG_INSTALLED_ROOT=$VCPKG_ROOT/installed" >> $GITHUB_ENV
 
       - name: Install Rust (stable)
