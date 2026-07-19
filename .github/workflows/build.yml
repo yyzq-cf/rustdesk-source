@@ -290,8 +290,9 @@ jobs:
           sed -i 's/-Xmx1024M/-Xmx4G/' flutter/android/gradle.properties
           # Force Kotlin version in ALL subprojects (fixes plugin Kotlin metadata mismatch)
           sed -i '/subprojects {/a\    project.configurations.all { resolutionStrategy.eachDependency { details -> if (details.requested.group == "org.jetbrains.kotlin") { details.useVersion "2.0.21" } } }' flutter/android/build.gradle
-          # Remove release signingConfig (use debug signing)
+          # Remove release signingConfig and use debug signing (fix APK install)
           sed -i '/signingConfig signingConfigs.release/d' flutter/android/app/build.gradle
+          sed -i '/proguardFiles getDefaultProguardFile/a\            signingConfig signingConfigs.debug' flutter/android/app/build.gradle
 
       - name: Build APK
         run: |
