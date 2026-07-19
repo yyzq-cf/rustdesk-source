@@ -388,6 +388,7 @@ jobs:
       - name: Install system dependencies
         run: brew install nasm yasm
 
+      - name: Install vcpkg and build deps
         run: |
           git clone https://github.com/microsoft/vcpkg "$VCPKG_ROOT"
           cd "$VCPKG_ROOT"
