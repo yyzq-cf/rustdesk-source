@@ -249,6 +249,7 @@ jobs:
         run: |
           # vcpkg manifest mode doesn't allow specifying packages and arm32 overwrites arm64.
           # Run from /tmp to avoid manifest mode detection.
+          cd /tmp
           "$VCPKG_ROOT/vcpkg" install opus libvpx libyuv aom oboe cpu-features \
             --triplet arm64-android \
             --x-install-root="$VCPKG_ROOT/installed" \
