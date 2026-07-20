@@ -51,17 +51,17 @@ fn initialize(app_dir: &str, custom_client_config: &str) {
         crate::read_custom_client(custom_client_config);
     }
     // Auto-fill custom-rendezvous-server from PROD_RENDEZVOUS_SERVER so UI shows the server
-    if Config::get_option("custom-rendezvous-server").is_empty() {
+    if config::Config::get_option("custom-rendezvous-server").is_empty() {
         let prod = config::PROD_RENDEZVOUS_SERVER.read().unwrap().clone();
         if !prod.is_empty() {
-            Config::set_option("custom-rendezvous-server".into(), prod);
+            config::Config::set_option("custom-rendezvous-server".into(), prod);
         }
     }
     // Auto-fill key from RS_PUB_KEY so UI shows the key
-    if Config::get_option("key").is_empty() {
+    if config::Config::get_option("key").is_empty() {
         let key = config::RS_PUB_KEY.to_owned();
         if !key.is_empty() {
-            Config::set_option("key".into(), key);
+            config::Config::set_option("key".into(), key);
         }
     }
     #[cfg(target_os = "android")]
