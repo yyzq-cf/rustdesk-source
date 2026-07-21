@@ -387,7 +387,8 @@ jobs:
           submodules: recursive
 
       - name: Install system dependencies
-        run: brew install nasm yasm
+        # Skip nasm: arm64 nasm can't do x86_64 multipass, aom uses C fallback
+        run: brew install yasm
 
       - name: Install vcpkg and build deps
         run: |
