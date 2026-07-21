@@ -396,8 +396,9 @@ jobs:
           git checkout 120deac3062162151622ca4860575a33844ba10b
           ./bootstrap-vcpkg.sh -disableMetrics
           # Install x64-osx deps (cross-compile from arm64 runner)
+          # Skip aom: its cmake pie_check test compiles+runs x86_64 binary, fails on arm64
           cd /tmp
-          "$VCPKG_ROOT/vcpkg" --disable-metrics install opus libvpx libyuv aom --triplet x64-osx --x-install-root="$VCPKG_ROOT/installed"
+          "$VCPKG_ROOT/vcpkg" --disable-metrics install opus libvpx libyuv --triplet x64-osx --x-install-root="$VCPKG_ROOT/installed"
           echo "VCPKG_INSTALLED_ROOT=$VCPKG_ROOT/installed" >> $GITHUB_ENV
 
       - name: Install Rust (stable)
